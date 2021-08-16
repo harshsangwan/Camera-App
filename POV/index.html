@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <video autoplay controls></video>
+    <!-- <audio autoplay controls></audio> -->
+    <button>Record</button>
+
+    <!-- done javaScript within html -->
+    <script>
+      //this uses video tag from html in browser
+      let video = document.querySelector("video");
+      let btn = document.querySelector("button");
+      //this uses audio tag from html in browser
+      // let audio=document.querySelector("audio");
+      let constraints = { video: true, audio: true };
+      let mediaRecorder;
+      let isRecording = false; //flag
+      let chunks = []; //file will automatically divide itself into sets of chunks
+
+      //onclicking btn
+      btn.addEventListener("click", function () {
+        if (isRecording) {
+          mediaRecorder.stop();
+          isRecording = false;
+          btn.innerText = "Record";
+        } else {
+          mediaRecorder.start();
+          isRecording = true;
+          btn.innerText = "Recording...";
+        }
+      });
+
+      navigator.mediaDevices
+        .getUserMedia(constraints)
+        .then(function (mediaStream) {
+          video.srcObject = mediaStream;
+          // audio.srcObject =mediaStream;
+          let options = { mimeType: "video/webm; codecs=vp9" };
+          mediaRecorder = new MediaRecorder(mediaStream, options);
+          //media Recorder has two events "dataavailable" and "stop"
+          //dataavailable event on call pushes chunks of data into "chunks" variable
+          mediaRecorder.addEventListener("dataavailable", function (e) {
+            chunks.push(e.data);
+          });
+
+          mediaRecorder.addEventListener("stop", function () {
+            //when "Stop " event listener get triggered  we merge these chunks into large raw data "blob"
+            let blob = new Blob(chunks, { type: "video/mp4" });
+            chunks = []; //then I empty chunks
+
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement("a");
+            a.href = url;
+            a.download = "video.mp4";
+            a.click();
+            a.remove();
+          });
+        });
+
+      //predefined object h browser m jisse user ka media devices ka input(getUserMedia is promised based function/permission)
+      //mediaStream object h jo camera se video leta h(source)   LIVE INPUT
+      //promise resolve hone p mediaStream milta h
+    </script>
+  </body>
+</html>

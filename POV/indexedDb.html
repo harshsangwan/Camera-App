@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <input id="name" type="text" placeholder="Db-name" value="Db">
+    <input id="version" type="number" placeholder="1.0" value="1">
+    <button id="create">create</button>
+
+    <input type="text" name="" id="note" placeholder="Your note">
+    <button id="add">Add note</button>
+    <script>
+        let name=document.querySelector("#name");
+        let version=document.querySelector("#version");
+        let btn=document.querySelector("button#create");
+
+        let note=document.querySelector("#note");
+        let addbtn=document.querySelector("#add");
+
+        let db,v,dbAccess;
+
+        addbtn.addEventListener("click",function(){
+            let val=note.value;
+            if(!dbAccess){
+                alert("Please add a database to add note")
+                return;
+            }
+
+            //name of dataBase is Note, cs is objectStore
+            let tx=dbAccess.transaction("cs","readwrite");   // transaction("storeName","what function has to be performed")
+            let csObjectStore=tx.objectStore("cs"); //accessing objectStore cs
+            let data={
+                nId:Date.now(),
+                noteValue:val,
+            };
+            csObjectStore.add(data);
+        });
+
+
+        //there are three event in indexedDb 1)-SUCCESS   2)-UPGRADE  3)-ERROR
+        btn.addEventListener("click",function(){
+
+            db=name.value;
+            v=version.value
+            let request=indexedDB.open(db,v); //requesting data base to create
+            request.addEventListener("success",function(){
+                alert("db was created")
+                dbAccess=request.result; //this gives access to object Store
+
+                //calling viewNotes function as here we have access to objectStore
+                viewNotes();
+            });
+
+            request.addEventListener("upgradeneeded",function(){
+                alert("upgrade occured")
+                let db=request.result; //this gives access to object Store
+                db.createObjectStore("cs",{keyPath:"nId"})
+            });
+
+            request.addEventListener("error",function(){
+                alert("some error occured")  
+            });
+        });
+
+        function viewNotes(){
+            //this function console all objectStore of "cs"
+            //assumption :- we have access to "cs"  i.e dbAccess
+
+            let tx=dbAccess.transaction("cs","readonly");    //transaction for reading objectStore
+            let csObjectStore= tx.objectStore("cs");    //give access to store
+            let req=csObjectStore.openCursor();    //request cursor
+
+            req.addEventListener("success",function(){
+                let cursor=req.result;
+
+                //cursor is the pointer that points on every objects in objectStore
+                if(cursor){
+                    console.log(cursor.value);
+                    cursor.continue();  //request for next object and call success event again
+                }  
+            });
+        }
+
+    </script>
+</body>
+</html>
